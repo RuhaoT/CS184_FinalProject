@@ -107,3 +107,7 @@ add_executable(${PROJECT_NAME}_bin ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
 target_link_libraries(${PROJECT_NAME}_bin PUBLIC 3DCorelib)
 target_link_libraries(${PROJECT_NAME}_bin PUBLIC 3DRenderlib)
 
+# performance test target
+add_executable(${PROJECT_NAME}_perf ${CMAKE_CURRENT_SOURCE_DIR}/src/perf.cpp)
+target_link_libraries(${PROJECT_NAME}_perf PUBLIC 3DCorelib)
+target_link_libraries(${PROJECT_NAME}_perf PUBLIC 3DRenderlib)

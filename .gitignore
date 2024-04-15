@@ -1,0 +1,7 @@
+*.o
+*.out
+*.a
+
+bin/High-LevelPuzzle_bin
+bin/High-LevelPuzzle_perf
+build/*
