@@ -277,8 +277,11 @@ SeedPath PieceCreator::CreateSeedPath(int remvVoxelNum, vector<Vector3i> emptyVo
 	int lastPieceID = 0;
 	SeedPath seedPath;
 
+	vector<processSet> processSetArray;
+
 	// Find possible SeedVoxels for the remvPiece
 	vector<SeedPath> tempPathCandis = FindPieceSeedVoxels(emptyVoxels);
+
 
 	if ( tempPathCandis.size() == 0 )
 		return seedPath;
@@ -286,11 +289,13 @@ SeedPath PieceCreator::CreateSeedPath(int remvVoxelNum, vector<Vector3i> emptyVo
 	// Compute the corresponding SeedPath for each SeedVoxel
 	for (int i=0; i<tempPathCandis.size(); i++)
 	{
+		//for debug propose
 		ComputeSeedPathVoxels(tempPathCandis[i]);
 
 		int pathVoxelNum = tempPathCandis[i].pathVoxels.size();
 		if ( pathVoxelNum == 1 || pathVoxelNum > 0.8*remvVoxelNum )
 			tempPathCandis[i].isValid = false;
+			//tempPathCandis[i].isValid = true;
 		else
 			tempPathCandis[i].isValid = true;
 	}
@@ -355,7 +360,7 @@ vector<SeedPath> PieceCreator::FindPieceSeedVoxels(vector<Vector3i> emptyVoxels)
             Voxel* seedExpVoxel = expVolume->GetExpVolumeVoxel(seedVoxelPos, EXPA_VOLUME);
 
             int pieceAxisID = GetReverseAxisID( j );
-            int moveStepNum = expVolume->GetVoxelMoveSteps( seedVoxelPos, pieceAxisID);
+            int moveStepNum = expVolume->GetVoxelMov eSteps( seedVoxelPos, pieceAxisID);
 
             // The SeedVoxel should be on the volume and not be removable along revsAxisID
             if ( seedExpVoxel->piece == lastPieceID && moveStepNum != MAX_INT )

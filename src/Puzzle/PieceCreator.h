@@ -14,6 +14,7 @@
 #define _PIECE_CREATOR_H
 
 #include "Utility/HelpPuz.h"
+#include "Dataset/Dataset.h"
 #include <math.h>
 
 

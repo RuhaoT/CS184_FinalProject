@@ -2,10 +2,12 @@ cmake_minimum_required(VERSION 3.11)
 project(High-LevelPuzzle)
 
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_BUILD_TYPE "Debug")
+set(CMAKE_BUILD_TYPE "RelWithDebInfo")
 
 # disable optimization
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
+STRING(REPLACE "-O2" "-Od" CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
+add_compile_options(-fno-omit-frame-pointer -Og)
 
 #########################################
 #####                               #####
