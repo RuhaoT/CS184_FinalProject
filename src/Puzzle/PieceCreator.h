@@ -17,6 +17,10 @@
 #include "Dataset/Dataset.h"
 #include <math.h>
 
+#ifdef DATASET_ENABLE
+#include "Puzzle/Volume.h"
+#endif
+
 
 class Voxel;
 class Piece;
@@ -99,11 +103,19 @@ private:
     ExpVolume *expVolume;                // Expanded volume of the puzzle
 	vector<Piece*> pieceList;            // Puzzle piece list
 
+#ifdef DATASET_ENABLE
+	Volume *puzzleVolume;                // Puzzle volume
+#endif
+
 public:
 	PieceCreator();
 	~PieceCreator();
 	void InitPieceCreator(vector<Piece*> puzPieces, Vector3i puzVolumeSize, bool isCopyReachValue);
 	void ClearPieceCreator();
+
+#ifdef DATASET_ENABLE
+	void SetPuzzleVolume(Volume *puzVolume);
+#endif
 
     /// Utility functions
     int RandomlySelectVoxel(vector<Voxel*> voxelList, float beta);

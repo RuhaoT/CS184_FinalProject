@@ -470,6 +470,10 @@ bool PuzzleCreator::SubdivideKey(Puzzle *puzzle, Piece *origPiece, Piece *remvPi
     PieceCreator pieceCreator;
     pieceCreator.InitPieceCreator(puzzle->pieceList, puzzle->volume->GetVolumeSize(), true);
 
+#ifdef DATASET_ENABLE
+    pieceCreator.SetPuzzleVolume(puzzle->volume);
+#endif
+
     MainPath mainPath;
     bool isSucess = pieceCreator.ComputeMainPath(remvAvgVoxelNum, mainPath);
 
@@ -533,6 +537,10 @@ bool PuzzleCreator::SubdividePiece(Puzzle *puzzle, Piece *origPiece, Piece *remv
 
     PieceCreator pieceCreator;
     pieceCreator.InitPieceCreator(puzzle->pieceList, volumeSize, true);
+
+#ifdef DATASET_ENABLE
+    pieceCreator.SetPuzzleVolume(puzzle->volume);
+#endif
 
     for (int i=0;  i<graphPuzConfigs.size(); i++)
     {

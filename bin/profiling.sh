@@ -1,7 +1,7 @@
 # Test Profiling
-pathToMesh=../volume/fig_13_results_voxelized/Spider/Spider_12x13x6.vol
+pathToMesh=../volume/tbl_2_cubes_compare/Cube_4x4x4_E1.vol
 pieceNumber=4
-difficulty=3
+difficulty=4
 seed=50
 perfPath=/usr/lib/linux-tools/5.15.0-102-generic/perf
 

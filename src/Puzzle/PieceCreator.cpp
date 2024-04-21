@@ -82,7 +82,12 @@ void PieceCreator::InitPieceCreator(vector<Piece*> puzPieces, Vector3i puzVolume
 	expVolume->InitExpVolume(puzPieces, puzVolumeSize, isCopyReachValue);
 }
 
-
+#ifdef DATASET_ENABLE
+void PieceCreator::SetPuzzleVolume(Volume *puzVolume)
+{
+	puzzleVolume = puzVolume;
+}
+#endif
 
 
 ///=========================================================================================///
@@ -272,16 +277,30 @@ bool PieceCreator::ComputeMainPath(int remvVoxelNum, MainPath &mainPath)
 /// Compute Seed Path for the key piece
 ///----------------------------------------------------------------------
 
+
+
 SeedPath PieceCreator::CreateSeedPath(int remvVoxelNum, vector<Vector3i> emptyVoxels)
 {
 	int lastPieceID = 0;
 	SeedPath seedPath;
 
-	vector<processSet> processSetArray;
-
 	// Find possible SeedVoxels for the remvPiece
 	vector<SeedPath> tempPathCandis = FindPieceSeedVoxels(emptyVoxels);
 
+#ifdef DATASET_ENABLE
+	//printf("Initialising seedPath sequence array\n");
+	vector<seedPathCreationSequence> seedPathSequenceArray;
+	//printf("Initialised seedPath sequence array\n");
+	for (int i=0; i<tempPathCandis.size(); i++)
+	{
+		//printf("Creating seedPath sequence\n");
+		// create a seedpath sequence
+		seedPathSequenceArray.push_back(seedPathCreationSequence(puzzleVolume, pieceList));
+		// add a empty seedpath as initial seedpath
+		seedPathSequenceArray[i].addSeedPath(tempPathCandis[i]);
+	}
+	//printf("Appended seedPath sequence\n");
+#endif
 
 	if ( tempPathCandis.size() == 0 )
 		return seedPath;
@@ -298,6 +317,18 @@ SeedPath PieceCreator::CreateSeedPath(int remvVoxelNum, vector<Vector3i> emptyVo
 			//tempPathCandis[i].isValid = true;
 		else
 			tempPathCandis[i].isValid = true;
+
+#ifdef DATASET_ENABLE
+		// the seedPath has changed, so add the new seedPath to the sequence
+		seedPathSequenceArray[i].addSeedPath(tempPathCandis[i]);
+		//printf("Added final seedPath\n");
+		// update the final result
+		seedPathSequenceArray[i].updateFinalResult();
+		//printf("Updated final result\n");
+		// save the seedPath sequence to a file
+		seedPathSequenceArray[i].saveSeedPathSequence("Cube_4x4x4_E1.json");
+		//printf("Saved seedPath sequence\n");
+#endif
 	}
 
 	// Remove the invalid SeedPath
@@ -360,7 +391,7 @@ vector<SeedPath> PieceCreator::FindPieceSeedVoxels(vector<Vector3i> emptyVoxels)
             Voxel* seedExpVoxel = expVolume->GetExpVolumeVoxel(seedVoxelPos, EXPA_VOLUME);
 
             int pieceAxisID = GetReverseAxisID( j );
-            int moveStepNum = expVolume->GetVoxelMov eSteps( seedVoxelPos, pieceAxisID);
+            int moveStepNum = expVolume->GetVoxelMoveSteps( seedVoxelPos, pieceAxisID);
 
             // The SeedVoxel should be on the volume and not be removable along revsAxisID
             if ( seedExpVoxel->piece == lastPieceID && moveStepNum != MAX_INT )

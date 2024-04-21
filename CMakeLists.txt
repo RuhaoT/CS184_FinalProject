@@ -9,6 +9,14 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
 STRING(REPLACE "-O2" "-Od" CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
 add_compile_options(-fno-omit-frame-pointer -Og)
 
+# document generation
+if(ENABLE_DATASET)
+        add_definitions(-DDATASET_ENABLE)
+        find_package(nlohmann_json 3.11.3 REQUIRED)
+endif()
+
+
+
 #########################################
 #####                               #####
 #####           Option              #####
@@ -57,7 +65,10 @@ file(GLOB 3DCoreFiles
         src/Puzzle_debug/*.h
         src/Puzzle_debug/*.cpp
         src/Puzzle/Puzzle_smooth.h
-        src/Puzzle/Puzzle_smooth.cpp)
+        src/Puzzle/Puzzle_smooth.cpp
+        src/Dataset/*.h
+        src/Dataset/*.cpp
+        )
 
 include_directories(src)
 
@@ -90,7 +101,10 @@ file(GLOB 3DRenderFiles
         src/PuzConverter/*.h
         src/PuzConverter/*.cpp
         src/Render/*.h
-        src/Render/*.cpp)
+        src/Render/*.cpp
+        src/Dataset/*.h
+        src/Dataset/*.cpp
+        )
 
 add_library(3DRenderlib STATIC ${3DRenderFiles})
 
@@ -116,3 +130,8 @@ target_link_libraries(${PROJECT_NAME}_bin PUBLIC 3DRenderlib)
 add_executable(${PROJECT_NAME}_perf ${CMAKE_CURRENT_SOURCE_DIR}/src/perf.cpp)
 target_link_libraries(${PROJECT_NAME}_perf PUBLIC 3DCorelib)
 target_link_libraries(${PROJECT_NAME}_perf PUBLIC 3DRenderlib)
+
+if(ENABLE_DATASET)
+        target_link_libraries(${PROJECT_NAME}_bin PUBLIC nlohmann_json::nlohmann_json)
+        target_link_libraries(${PROJECT_NAME}_perf PUBLIC nlohmann_json::nlohmann_json)
+endif()

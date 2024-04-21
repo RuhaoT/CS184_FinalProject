@@ -1,43 +1,62 @@
-#include "PieceCreator.h"
 #include "Utility/HelpPuz.h"
+#include "Puzzle/Volume.h"
+#include "Puzzle/PieceCreator.h"
+#include "Puzzle/Piece.h"
+#include "Puzzle/PieceFace.h"
+#include <nlohmann/json.hpp>
+#include <Eigen/Eigen>
+#include <vector>
 
-class processSet
+using json = nlohmann::json;
+
+struct SeedPath;
+
+class Piece;
+class Voxel;
+class Volume;
+
+class seedPathCreationSequence
 {
     public:
-    vector<DataState> stateList;
+    vector<SeedPath> seedPathSequence;
+    bool isFinalResultValid;
 
-    processSet();
-    ~processSet();
-}
+    //stable information
+    //these information are stable and will not change during the process of creating seedPath
+    Volume *puzzleVolume;
+    vector<Piece*> pieceList;
 
-class DataVoxel
-{
-    public:
-    Voxel *voxel;
-    bool isKept;
-    bool isSeed;
-    bool isEmpty;
+    seedPathCreationSequence(Volume *puzzleVolume, vector<Piece*> pieceList);
+    ~seedPathCreationSequence();
 
-    DataVoxel();
-    ~DataVoxel();
+    void addSeedPath(SeedPath seedPath);
+    void updateFinalResult();
 
-}
+    void saveSeedPathSequence(string filename);
+};
 
-DataVoxel::DataVoxel(Voxel *voxel, bool isKept, bool isSeed, bool isEmpty)
-{
-    this->voxel = voxel;
-    this->isKept = isKept;
-    this->isSeed = isSeed;
-    this->isEmpty = isEmpty;
-}
+// helper functions
 
+// convert a eigen vector3i vector to a json array
+json eigenVector3iToJsonArray(vector<Vector3i> vec);
 
-class DataState
-{
-    public:
-    int stateID;
-    vector<DataVoxel> voxelList;
+// convert a int vector to a json array
+json intVectorToJsonArray(vector<int> vec);
 
-    DataState();
-    ~DataState();
-}
+// convert a voxel to a json object
+json voxelToJson(Voxel *voxel);
+
+// convert a voxel vector to a json array
+json voxelVectorToJsonArray(vector<Voxel> vec);
+
+// convert a bounding box to a json object
+json boundingBoxToJson(BoundingBox* bbox);
+
+// convert a volume to a json object
+json volumeToJson(Volume *volume);
+
+// convert a piece face to a json object
+json pieceFaceToJson(PieceFace* pieceFace);
+
+// convert a piece to a json object
+json pieceToJson(Piece* piece);
