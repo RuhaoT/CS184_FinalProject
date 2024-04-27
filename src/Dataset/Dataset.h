@@ -10,6 +10,7 @@
 using json = nlohmann::json;
 
 struct SeedPath;
+struct BlockPath;
 
 class Piece;
 class Voxel;
@@ -35,7 +36,30 @@ class seedPathCreationSequence
     void saveSeedPathSequence(string filename);
 };
 
+class blockPathCreationSequence
+{
+    public:
+    vector<BlockPath> blockPathSequence;
+
+    //stable information
+    //these information are stable and will not change during the process of creating blockPath
+    Volume *puzzleVolume;
+    vector<Piece*> pieceList;
+    SeedPath *seedPath;
+
+    blockPathCreationSequence(Volume *puzzleVolume, vector<Piece*> pieceList, SeedPath *seedPath);
+    ~blockPathCreationSequence();
+
+    void addBlockPath(BlockPath blockPath);
+
+    void saveBlockPathSequence(string filename);
+};
+
 // helper functions
+json blockPathToJson(BlockPath *blockPath);
+
+// convert a SeedPath to a json object
+json seedPathToJson(SeedPath *seedPath);
 
 // convert a eigen vector3i vector to a json array
 json eigenVector3iToJsonArray(vector<Vector3i> vec);

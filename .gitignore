@@ -7,3 +7,4 @@ bin/High-LevelPuzzle_perf
 build/*
 
 bin/*
+!bin/.sh

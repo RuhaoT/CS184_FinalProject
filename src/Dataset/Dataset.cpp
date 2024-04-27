@@ -15,6 +15,7 @@ class Voxel;
 class Volume;
 
 struct SeedPath;
+struct BlockPath;
 
 // seedPathCreationSequence
 
@@ -64,21 +65,7 @@ void seedPathCreationSequence::saveSeedPathSequence(string filename)
     j["seedPathSequence"] = json::array();
     for (int i = 0; i < seedPathSequence.size(); i++)
     {
-        json seedPathJson;
-        seedPathJson["stateID"] = i;
-        seedPathJson["pieceID"] = seedPathSequence[i].pieceID;
-        seedPathJson["pieceAxisID"] = seedPathSequence[i].pieceAxisID;
-        seedPathJson["isValid"] = seedPathSequence[i].isValid;
-        seedPathJson["contaVoxels"] = eigenVector3iToJsonArray(seedPathSequence[i].contaVoxels);
-        seedPathJson["seedVoxels"] = eigenVector3iToJsonArray(seedPathSequence[i].seedVoxels);
-        seedPathJson["keptVoxels"] = eigenVector3iToJsonArray(seedPathSequence[i].keptVoxels);
-        seedPathJson["seedPossib"] = seedPathSequence[i].seedPossib;
-        seedPathJson["pathVoxels"] = eigenVector3iToJsonArray(seedPathSequence[i].pathVoxels);
-        seedPathJson["moveAxisIDs"] = intVectorToJsonArray(seedPathSequence[i].moveAxisIDs);
-        seedPathJson["seedMoveSteps"] = intVectorToJsonArray(seedPathSequence[i].seedMoveSteps);
-        seedPathJson["moveStep"] = seedPathSequence[i].moveStep;
-        seedPathJson["enableBackMotion"] = seedPathSequence[i].enableBackMotion;
-        j["seedPathSequence"].push_back(seedPathJson);
+        j["seedPathSequence"].push_back(seedPathToJson(&(seedPathSequence[i])));
     }
     //printf("Saved seedPathSequence\n");
 
@@ -94,6 +81,59 @@ void seedPathCreationSequence::saveSeedPathSequence(string filename)
     }
     //printf("Saved stable information\n");
     printf("Saved seedPathSequence\n");
+
+    // append to the previous json object
+    file << j.dump(4);
+    file.close();
+}
+
+// blockPathCreationSequence
+
+// Initialization
+blockPathCreationSequence::blockPathCreationSequence(Volume *puzzleVolume, vector<Piece*> pieceList, SeedPath *seedPath)
+{
+    this->puzzleVolume = puzzleVolume;
+    this->pieceList = pieceList;
+    this->seedPath = seedPath;
+}
+
+// Destructor
+blockPathCreationSequence::~blockPathCreationSequence()
+{
+    // Do nothing
+}
+
+// Add a blockPath to the sequence
+void blockPathCreationSequence::addBlockPath(BlockPath blockPath)
+{
+    blockPathSequence.push_back(blockPath);
+}
+
+// Save the blockPath sequence to a file
+void blockPathCreationSequence::saveBlockPathSequence(string filename)
+{
+    json j;
+    // Save creation sequence
+    j["blockPathSequence"] = json::array();
+    for (int i = 0; i < blockPathSequence.size(); i++)
+    {
+        j["blockPathSequence"].push_back(blockPathToJson(&(blockPathSequence[i])));
+    }
+    //printf("Saved blockPathSequence\n");
+
+    ofstream file(filename, ios::app);
+
+    // Save stable information
+    j["puzzleVolume"] = volumeToJson(puzzleVolume);
+    //printf("Saved puzzleVolume\n");
+    j["pieceList"] = json::array();
+    for (int i = 0; i < pieceList.size(); i++)
+    {
+        j["pieceList"].push_back(pieceToJson((pieceList[i])));
+    }
+    j["seedPath"] = seedPathToJson(seedPath);
+    //printf("Saved stable information\n");
+    printf("Saved blockPathSequence\n");
 
     // append to the previous json object
     file << j.dump(4);
@@ -213,5 +253,38 @@ json pieceToJson(Piece* piece)
     j["pieceFace"] = pieceFaceToJson((piece->pieceFace));
     j["neiborPiece"] = intVectorToJsonArray(piece->neiborPiece);
     j["movableAxis"] = intVectorToJsonArray(piece->movableAxis);
+    return j;
+}
+
+// convert a SeedPath to a json object
+json seedPathToJson(SeedPath *seedPath)
+{
+    json j;
+    j["pieceID"] = seedPath->pieceID;
+    j["pieceAxisID"] = seedPath->pieceAxisID;
+    j["isValid"] = seedPath->isValid;
+    j["contaVoxels"] = eigenVector3iToJsonArray(seedPath->contaVoxels);
+    j["seedVoxels"] = eigenVector3iToJsonArray(seedPath->seedVoxels);
+    j["keptVoxels"] = eigenVector3iToJsonArray(seedPath->keptVoxels);
+    j["seedPossib"] = seedPath->seedPossib;
+    j["pathVoxels"] = eigenVector3iToJsonArray(seedPath->pathVoxels);
+    j["moveAxisIDs"] = intVectorToJsonArray(seedPath->moveAxisIDs);
+    j["seedMoveSteps"] = intVectorToJsonArray(seedPath->seedMoveSteps);
+    j["moveStep"] = seedPath->moveStep;
+    j["enableBackMotion"] = seedPath->enableBackMotion;
+    return j;
+}
+
+// convert a BlockPath to a json object
+json blockPathToJson(BlockPath *blockPath)
+{
+    json j;
+    j["pieceID"] = blockPath->pieceID;
+    j["pieceAxisID"] = blockPath->pieceAxisID;
+    j["isValid"] = blockPath->isValid;
+    j["blockVoxel"] = {blockPath->blockVoxel[0], blockPath->blockVoxel[1], blockPath->blockVoxel[2]};
+    j["keptVoxels"] = eigenVector3iToJsonArray(blockPath->keptVoxels);
+    j["blkPossib"] = blockPath->blkPossib;
+    j["pathVoxels"] = eigenVector3iToJsonArray(blockPath->pathVoxels);
     return j;
 }

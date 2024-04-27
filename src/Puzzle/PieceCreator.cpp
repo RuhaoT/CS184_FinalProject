@@ -22,7 +22,6 @@
 #include "ExpVolume.h"
 #include "PieceCreator.h"
 
-
 extern Vector3i neiborPos[6];
 extern char axisArray[6][4];
 
@@ -326,7 +325,7 @@ SeedPath PieceCreator::CreateSeedPath(int remvVoxelNum, vector<Vector3i> emptyVo
 		seedPathSequenceArray[i].updateFinalResult();
 		//printf("Updated final result\n");
 		// save the seedPath sequence to a file
-		seedPathSequenceArray[i].saveSeedPathSequence("Cube_4x4x4_E1.json");
+		seedPathSequenceArray[i].saveSeedPathSequence("seedpath.json");
 		//printf("Saved seedPath sequence\n");
 #endif
 	}
@@ -513,6 +512,14 @@ BlockPath PieceCreator::CreateBlockPath(SeedPath seedPath, int remvVoxelNum)
 	if ( blockPaths.size() == 0 )
 		return blockPath;
 
+#ifdef DATASET_ENABLE
+	vector<blockPathCreationSequence> blockPathSequenceArray;
+	for (int i=0; i<blockPaths.size(); i++)
+	{
+		blockPathSequenceArray.push_back(blockPathCreationSequence(puzzleVolume, pieceList, &seedPath));
+		blockPathSequenceArray[i].addBlockPath(blockPaths[i]);
+	}
+#endif
 
 	///////////////////////////////////////////////////////////////////
 	// 2. Compute blockPath corresponding to each blockVoxel
@@ -531,6 +538,14 @@ BlockPath PieceCreator::CreateBlockPath(SeedPath seedPath, int remvVoxelNum)
 	if ( blkPathCandis.size() == 0 )
 		return blockPath;
 
+#ifdef DATASET_ENABLE
+	for (int i=0; i<blkPathCandis.size(); i++)
+	{
+		blockPathSequenceArray[i].addBlockPath(blkPathCandis[i]);
+		// save the blockPath sequence to a file
+		blockPathSequenceArray[i].saveBlockPathSequence("blockpath.json");
+	}
+#endif
 
 	///////////////////////////////////////////////////////////////////
 	// 3. Calculate possibility value of each blockPath
