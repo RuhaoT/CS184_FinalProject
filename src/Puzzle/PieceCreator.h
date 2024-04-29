@@ -15,6 +15,8 @@
 
 #include "Utility/HelpPuz.h"
 #include "Dataset/Dataset.h"
+#include "RandomForest/RandomForest.h"
+
 #include <math.h>
 
 #ifdef DATASET_ENABLE
@@ -28,7 +30,7 @@ class PieceGroup;
 class PuzConfig;
 class Piece_debug;
 class PuzSolver;
-
+class seedPathCreationSequence;
 
 struct SeedPath
 {
@@ -127,10 +129,11 @@ public:
 	////////////////////////////////////////////////////
 
 	/// Compute MainPath for the Key Piece
-    bool ComputeMainPath(int remvVoxelNum, MainPath &mainPath);
+    bool ComputeMainPath(int remvVoxelNum, MainPath &mainPath, vector<seedPathCreationSequence> &seedPathSequenceArray,
+                        RandomForest randomForest);
 
 	/// Seed Path
-	SeedPath CreateSeedPath(int remvVoxelNum, vector<Vector3i> emptyVoxels);
+	SeedPath CreateSeedPath(int remvVoxelNum, vector<Vector3i> emptyVoxels, RandomForest randomForest);
 	vector<SeedPath> FindPieceSeedVoxels(vector<Vector3i> emptyVoxels);
 	void ComputeSeedPathVoxels(SeedPath &seedPath);
 

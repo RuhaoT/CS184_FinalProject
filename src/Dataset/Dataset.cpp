@@ -7,6 +7,7 @@
 #include <Eigen/Eigen>
 #include <fstream>
 #include <vector>
+#include <iostream>
 
 using json = nlohmann::json;
 
@@ -45,43 +46,43 @@ void seedPathCreationSequence::addSeedPath(SeedPath seedPath)
 // Update the final result
 void seedPathCreationSequence::updateFinalResult()
 {
-    // Check if the last seedPath is valid
-    if (seedPathSequence.back().isValid)
-    {
+//     // Check if the last seedPath is valid
+//     if (seedPathSequence.back().isValid)
+//     {
         isFinalResultValid = true;
-    }
+//     }
 }
 
 // Save the seedPath sequence to a file
 void seedPathCreationSequence::saveSeedPathSequence(string filename)
 {
-    // if not valid, do not save
-    if (!isFinalResultValid)
-    {
-        return;
-    }
+//     // if not valid, do not save
+//     if (!isFinalResultValid)
+//     {
+//         return;
+//     }
 
     json j;
     j["isFinalResultValid"] = isFinalResultValid;
-
+//     std::cout << std::boolalpha << isFinalResultValid << std::endl;
     // Save creation sequence
     j["seedPathSequence"] = json::array();
     for (int i = 0; i < seedPathSequence.size(); i++)
     {
         j["seedPathSequence"].push_back(seedPathToJson(&(seedPathSequence[i])));
     }
-    //printf("Saved seedPathSequence\n");
+    //printf("Saved seed PathSequence\n");
 
     ofstream file(filename, ios::app);
 
-    // Save stable information
-    j["puzzleVolume"] = volumeToJson(puzzleVolume);
-    //printf("Saved puzzleVolume\n");
-    j["pieceList"] = json::array();
-    for (int i = 0; i < pieceList.size(); i++)
-    {
-        j["pieceList"].push_back(pieceToJson((pieceList[i])));
-    }
+//     // Save stable information
+//     j["puzzleVolume"] = volumeToJson(puzzleVolume);
+//     //printf("Saved puzzleVolume\n");
+//     j["pieceList"] = json::array();
+//     for (int i = 0; i < pieceList.size(); i++)
+//     {
+//         j["pieceList"].push_back(pieceToJson((pieceList[i])));
+//     }
     //printf("Saved stable information\n");
     //printf("Saved seedPathSequence\n");
 
@@ -262,7 +263,7 @@ json pieceToJson(Piece* piece)
 }
 
 // convert a SeedPath to a json object
-json seedPathToJson(SeedPath *seedPath)
+json seedPathToJson(const SeedPath *seedPath)
 {
     json j;
     j["pieceID"] = seedPath->pieceID;
