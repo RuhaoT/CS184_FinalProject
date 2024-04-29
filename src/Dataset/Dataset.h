@@ -65,7 +65,7 @@ class blockPathCreationSequence
 json blockPathToJson(BlockPath *blockPath);
 
 // convert a SeedPath to a json object
-json seedPathToJson(SeedPath *seedPath);
+json seedPathToJson(const SeedPath *seedPath);
 
 // convert a eigen vector3i vector to a json array
 json eigenVector3iToJsonArray(vector<Vector3i> vec);

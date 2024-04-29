@@ -8,10 +8,11 @@
 #include "libigl_UI.h"
 #include "libigl_Render.h"
 #include "Puzzle/Piece.h"
+
 #include <iostream>
 #include <fstream>
 
-
+#include "RandomForest/Trainer.h"
 
 #include <nlohmann/json.hpp>
 
@@ -64,6 +65,8 @@ int main(int argc, char *argv[])
     clock_t beginTime = clock();
     clock_t endTime;
     float elapsed;
+    
+    RandomForest randomForest = trainRandomForest();
 
     while ( true )
     {
@@ -82,7 +85,7 @@ int main(int argc, char *argv[])
         puzzle = new Puzzle();
         puzzle->SetVolume( myPuzzle.volume );
 
-        myPuzzleCreator.PartitionVolume_Subdiv(puzzle, pieceNum, level, variance);
+        myPuzzleCreator.PartitionVolume_Subdiv(puzzle, pieceNum, level, variance, randomForest);
 
         endTime = clock();
         elapsed = ((float) (endTime - beginTime)) / (1.0f*CLOCKS_PER_SEC);
