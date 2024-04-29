@@ -4,7 +4,7 @@ for file in $(find ../volume -name "*.vol"); do
     meshName=$(basename $file .vol)
     pathToMesh=$file
     # how many path to generate
-    pathNum=40
+    pathNum=20
     for pieceNumber in 4 5 6 7 8; do
         for difficulty in 3 4 5 6 7; do
             ../bin/High-LevelPuzzle_data $pathToMesh $pieceNumber $difficulty $pathNum
