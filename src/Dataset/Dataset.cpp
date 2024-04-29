@@ -17,6 +17,9 @@ class Volume;
 struct SeedPath;
 struct BlockPath;
 
+// generated seedPath number in current execution
+int generatedSeedPathNum = 0;
+
 // seedPathCreationSequence
 
 // Initialization
@@ -80,11 +83,13 @@ void seedPathCreationSequence::saveSeedPathSequence(string filename)
         j["pieceList"].push_back(pieceToJson((pieceList[i])));
     }
     //printf("Saved stable information\n");
-    printf("Saved seedPathSequence\n");
+    //printf("Saved seedPathSequence\n");
 
     // append to the previous json object
     file << j.dump(4);
     file.close();
+
+    generatedSeedPathNum++;
 }
 
 // blockPathCreationSequence
@@ -133,7 +138,7 @@ void blockPathCreationSequence::saveBlockPathSequence(string filename)
     }
     j["seedPath"] = seedPathToJson(seedPath);
     //printf("Saved stable information\n");
-    printf("Saved blockPathSequence\n");
+    //printf("Saved blockPathSequence\n");
 
     // append to the previous json object
     file << j.dump(4);

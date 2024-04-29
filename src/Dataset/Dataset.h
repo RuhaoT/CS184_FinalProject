@@ -1,3 +1,6 @@
+#ifndef DATASET_H
+#define DATASET_H
+
 #include "Utility/HelpPuz.h"
 #include "Puzzle/Volume.h"
 #include "Puzzle/PieceCreator.h"
@@ -15,6 +18,9 @@ struct BlockPath;
 class Piece;
 class Voxel;
 class Volume;
+
+// generated seedPath number in current execution
+extern int generatedSeedPathNum;
 
 class seedPathCreationSequence
 {
@@ -84,3 +90,5 @@ json pieceFaceToJson(PieceFace* pieceFace);
 
 // convert a piece to a json object
 json pieceToJson(Piece* piece);
+
+#endif

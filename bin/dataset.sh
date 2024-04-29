@@ -1,6 +1,6 @@
 # Test Dataset
-meshName=Cube_4x4x4_E1
-pathToMesh=../volume/tbl_2_cubes_compare/$meshName.vol
+meshName=Airplane_14x6x17
+pathToMesh=../volume/fig_14_fabrication/Airplane/Airplane_14x6x17.vol
 pieceNumber=4
 difficulty=4
 seed=50

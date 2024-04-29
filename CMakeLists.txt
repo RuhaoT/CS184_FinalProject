@@ -134,4 +134,10 @@ target_link_libraries(${PROJECT_NAME}_perf PUBLIC 3DRenderlib)
 if(ENABLE_DATASET)
         target_link_libraries(${PROJECT_NAME}_bin PUBLIC nlohmann_json::nlohmann_json)
         target_link_libraries(${PROJECT_NAME}_perf PUBLIC nlohmann_json::nlohmann_json)
+
+        # data target
+        add_executable(${PROJECT_NAME}_data ${CMAKE_CURRENT_SOURCE_DIR}/src/data.cpp)
+        target_link_libraries(${PROJECT_NAME}_data PUBLIC 3DCorelib)
+        target_link_libraries(${PROJECT_NAME}_data PUBLIC 3DRenderlib)
+        target_link_libraries(${PROJECT_NAME}_data PUBLIC nlohmann_json::nlohmann_json)
 endif()
