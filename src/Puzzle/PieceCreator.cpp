@@ -21,6 +21,9 @@
 #include "PuzConfig.h"
 #include "ExpVolume.h"
 #include "PieceCreator.h"
+#include "Dataset/Dataset.h"
+#include <iostream>
+#include <chrono>
 
 extern Vector3i neiborPos[6];
 extern char axisArray[6][4];
@@ -178,34 +181,33 @@ bool PieceCreator::IsRemainPieceConnected(int lastPieceID, vector<Vector3i> main
 /// Compute MainPath for the key piece
 ///----------------------------------------------------------------------
 
-bool PieceCreator::ComputeMainPath(int remvVoxelNum, MainPath &mainPath)
+bool PieceCreator::ComputeMainPath(int remvVoxelNum, MainPath &mainPath, vector<seedPathCreationSequence> &seedPathSequenceArray, RandomForest randomForest)
 {
     ////////////////////////////////////////////////////////////////
     /// 1. Build contacting graph for the initial volume/puzzle
-
+//     std::cout << "here" << std::endl;
     PuzConfig tagtPuzConfig;
     tagtPuzConfig.pieceIDList.push_back(0);
     tagtPuzConfig.piecePosList.push_back(Vector3i(0,0,0));
     expVolume->BuildConfigContactGraph(&tagtPuzConfig, pieceList);
-
-
+    
     ////////////////////////////////////////////////////////////////
     /// 2. Create SeedPath and check its motion space
 
     mainPath.isValid = false;
 
     vector<Vector3i> emptyVoxels = expVolume->ComputeEmptyVoxels(pieceList);
-
-    //vector<Vector3i> voxelList = emptyVoxels;
-    //for (int i = 0; i < voxelList.size(); ++i)
-    //{
-    //    printf("%d %d %d.\n", voxelList[i](0), voxelList[i](1), voxelList[i](2));
-    //}
-
-    SeedPath seedPath = CreateSeedPath(remvVoxelNum, emptyVoxels);
-
-    if ( !seedPath.isValid )
-        return false;
+#ifdef DATASET_ENABLE
+	seedPathSequenceArray.push_back(seedPathCreationSequence(puzzleVolume, pieceList));
+#endif
+    
+    SeedPath seedPath = CreateSeedPath(remvVoxelNum, emptyVoxels, randomForest);
+    
+#ifdef DATASET_ENABLE
+	seedPathSequenceArray[0].addSeedPath(seedPath);
+#endif  
+    if ( !seedPath.isValid ){
+        return false;}
 
     seedPath.moveAxisIDs = expVolume->CheckSeedPathMotion(seedPath.pieceAxisID, seedPath.pathVoxels);
 
@@ -218,11 +220,9 @@ bool PieceCreator::ComputeMainPath(int remvVoxelNum, MainPath &mainPath)
     {
         blockPath = CreateBlockPath(seedPath, remvVoxelNum);
 
-        if ( blockPath.pathVoxels.size() == 0 )
-            return false;
+        if ( blockPath.pathVoxels.size() == 0 ){       
+            return false;}
     }
-
-
     ////////////////////////////////////////////////////////////////
     /// 4. Check if the mainPath is valid or not
 
@@ -233,8 +233,8 @@ bool PieceCreator::ComputeMainPath(int remvVoxelNum, MainPath &mainPath)
     }
     //mainPath.pathOrgVoxels = expVolume->Exp2OrgVoxels( mainPath.pathVoxels );
 
-    if ( mainPath.pathVoxels.size() > remvVoxelNum)
-        return false;
+    if ( mainPath.pathVoxels.size() > remvVoxelNum){
+        return false;}
 
     //if( IsRemainPieceConnected(seedPath.pieceID, mainPath.pathOrgVoxels ) == false )
     //{
@@ -264,10 +264,11 @@ bool PieceCreator::ComputeMainPath(int remvVoxelNum, MainPath &mainPath)
 
     ExtendMainPath(mainPath, remvVoxelNum);
 
-    if ( mainPath.pathVoxels.size() != remvVoxelNum )
-        return false;
-
+    if ( mainPath.pathVoxels.size() != remvVoxelNum ){
+        return false;}
+    
     mainPath.isValid  = true;
+    
     return true;
 }
 
@@ -278,7 +279,7 @@ bool PieceCreator::ComputeMainPath(int remvVoxelNum, MainPath &mainPath)
 
 
 
-SeedPath PieceCreator::CreateSeedPath(int remvVoxelNum, vector<Vector3i> emptyVoxels)
+SeedPath PieceCreator::CreateSeedPath(int remvVoxelNum, vector<Vector3i> emptyVoxels, RandomForest randomForest)
 {
 	int lastPieceID = 0;
 	SeedPath seedPath;
@@ -286,20 +287,20 @@ SeedPath PieceCreator::CreateSeedPath(int remvVoxelNum, vector<Vector3i> emptyVo
 	// Find possible SeedVoxels for the remvPiece
 	vector<SeedPath> tempPathCandis = FindPieceSeedVoxels(emptyVoxels);
 
-#ifdef DATASET_ENABLE
-	//printf("Initialising seedPath sequence array\n");
-	vector<seedPathCreationSequence> seedPathSequenceArray;
-	//printf("Initialised seedPath sequence array\n");
-	for (int i=0; i<tempPathCandis.size(); i++)
-	{
-		//printf("Creating seedPath sequence\n");
-		// create a seedpath sequence
-		seedPathSequenceArray.push_back(seedPathCreationSequence(puzzleVolume, pieceList));
-		// add a empty seedpath as initial seedpath
-		seedPathSequenceArray[i].addSeedPath(tempPathCandis[i]);
-	}
-	//printf("Appended seedPath sequence\n");
-#endif
+// #ifdef DATASET_ENABLE
+// 	//printf("Initialising seedPath sequence array\n");
+// 	vector<seedPathCreationSequence> seedPathSequenceArray;
+// 	//printf("Initialised seedPath sequence array\n");
+// 	for (int i=0; i<tempPathCandis.size(); i++)
+// 	{
+// 		//printf("Creating seedPath sequence\n");
+// 		// create a seedpath sequence
+// 		seedPathSequenceArray.push_back(seedPathCreationSequence(puzzleVolume, pieceList));
+// 		// add a empty seedpath as initial seedpath
+// 		seedPathSequenceArray[i].addSeedPath(tempPathCandis[i]);
+// 	}
+// 	//printf("Appended seedPath sequence\n");
+// #endif
 
 	if ( tempPathCandis.size() == 0 )
 		return seedPath;
@@ -317,17 +318,17 @@ SeedPath PieceCreator::CreateSeedPath(int remvVoxelNum, vector<Vector3i> emptyVo
 		else
 			tempPathCandis[i].isValid = true;
 
-#ifdef DATASET_ENABLE
-		// the seedPath has changed, so add the new seedPath to the sequence
-		seedPathSequenceArray[i].addSeedPath(tempPathCandis[i]);
-		//printf("Added final seedPath\n");
-		// update the final result
-		seedPathSequenceArray[i].updateFinalResult();
-		//printf("Updated final result\n");
-		// save the seedPath sequence to a file
-		seedPathSequenceArray[i].saveSeedPathSequence("seedpath.json");
-		//printf("Saved seedPath sequence\n");
-#endif
+// #ifdef DATASET_ENABLE
+// 		// the seedPath has changed, so add the new seedPath to the sequence
+// 		seedPathSequenceArray[i].addSeedPath(tempPathCandis[i]);
+// 		//printf("Added final seedPath\n");
+// 		// update the final result
+// 		seedPathSequenceArray[i].updateFinalResult();
+// 		//printf("Updated final result\n");
+// 		// save the seedPath sequence to a file
+// 		seedPathSequenceArray[i].saveSeedPathSequence("seedpath.json");
+// 		//printf("Saved seedPath sequence\n");
+// #endif
 	}
 
 	// Remove the invalid SeedPath
@@ -364,12 +365,85 @@ SeedPath PieceCreator::CreateSeedPath(int remvVoxelNum, vector<Vector3i> emptyVo
 		pathPossibList.push_back(pathPossib);
 	}
 
+#ifdef DATASET_ENABLE
 	// Randomly select one seedPath
 	int pathCandiIndex = GetRandomObjIndex(pathPossibList, 3);
 	seedPath = seedPathCandis[pathCandiIndex];
+    return seedPath;
+#endif
+    
+//     std::cout << "hererere11" << std::endl;
+    std::vector<std::string> inferData;
+    
+    for (const auto& seedPath : seedPathCandis) {
+        json seq = seedPathToJson(&(seedPath));
+
+        string line = "";
+        if (seq.is_object()) {
+            if (seq.contains("moveStep") && seq["moveStep"].is_number_integer())
+                line += " 5:" + std::to_string(seq["moveStep"].get<int>());
+            if (seq.contains("pieceAxisID") && seq["pieceAxisID"].is_number_integer())
+                line += " 6:" + std::to_string(seq["pieceAxisID"].get<int>());
+            if (seq.contains("seedPossib") && seq["seedPossib"].is_number_float())
+                line += " 7:" + std::to_string(seq["seedPossib"].get<double>());
+
+            int pathVoxelsIndex = 8;
+            if (seq.contains("pathVoxels") && seq["pathVoxels"].is_array()) {
+                for (const auto& voxel : seq["pathVoxels"]) {
+                    if (voxel.is_array() && voxel.size() == 3) {
+                        line += " " + std::to_string(pathVoxelsIndex) + ":" + std::to_string(voxel[0].get<int>());
+                        line += " " + std::to_string(pathVoxelsIndex + 1) + ":" + std::to_string(voxel[1].get<int>());
+                        line += " " + std::to_string(pathVoxelsIndex + 2) + ":" + std::to_string(voxel[2].get<int>());
+                        pathVoxelsIndex += 3;
+                    }
+                }
+            }
+
+            int seedVoxelsIndex = 50;
+            if (seq.contains("seedVoxels") && seq["seedVoxels"].is_array()) {
+                for (const auto& voxel : seq["seedVoxels"]) {
+                    if (voxel.is_array() && voxel.size() == 3) {
+                        line += " " + std::to_string(seedVoxelsIndex) + ":" + std::to_string(voxel[0].get<int>());
+                        line += " " + std::to_string(seedVoxelsIndex + 1) + ":" + std::to_string(voxel[1].get<int>());
+                        line += " " + std::to_string(seedVoxelsIndex + 2) + ":" + std::to_string(voxel[2].get<int>());
+                        seedVoxelsIndex += 3;
+                    }
+                }
+            }
+
+            int keptVoxelsIndex = 60;
+            if (seq.contains("keptVoxels") && seq["keptVoxels"].is_array()) {
+                for (const auto& voxel : seq["keptVoxels"]) {
+                    if (voxel.is_array() && voxel.size() == 3) {
+                        line += " " + std::to_string(keptVoxelsIndex) + ":" + std::to_string(voxel[0].get<int>());
+                        line += " " + std::to_string(keptVoxelsIndex + 1) + ":" + std::to_string(voxel[1].get<int>());
+                        line += " " + std::to_string(keptVoxelsIndex + 2) + ":" + std::to_string(voxel[2].get<int>());
+                        keptVoxelsIndex += 3;
+                    }
+                }
+            }
+
+//             if (seq.contains("contaVoxels") && seq["contaVoxels"].is_array())
+//                 line += " 144:" + std::to_string(seq["contaVoxels"].size());
+//             if (seq.contains("moveAxisIDs") && seq["moveAxisIDs"].is_array())
+//                 line += " 145:" + std::to_string(seq["moveAxisIDs"].size());
+        }
+        
+        inferData.push_back(line);
+    }
+    Data inferringData(true, inferData.size(), 100);
+    inferringData.read(inferData);
+    auto results = randomForest.predictProba(inferringData);
+    auto maxIter = std::max_element(results.begin(), results.end());
+    int maxIndex = std::distance(results.begin(), maxIter);
+//     std::cout << "Index with max probability: " << maxIndex << std::endl;
+//     std::cout << "Maximum probability: " << results[maxIndex] << std::endl;
+//     std::cout << "Maximum probability: " << results[0] << results[1] << results[2] << results[3] << results[4] << results[5] << std::endl;
+    
+    seedPath = seedPathCandis[maxIndex];
 
 	//printf("number of seed path: %d\n", seedPathCandis.size());
-
+    
 	return seedPath;
 }
 

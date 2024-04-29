@@ -22,6 +22,8 @@
 #include "Volume.h"
 #include "Puzzle.h"
 #include "PuzzleCreator.h"
+#include "RandomForest/Trainer.h"
+#include <iostream>
 
 #ifdef DEBUG_PUZZLE
 vector<int> failCaseNums;
@@ -52,8 +54,6 @@ void PuzzleCreator::InitPuzzleCreator(Volume *_volume)
 }
 
 
-
-
 ///=========================================================================================///
 ///               Create Interlocking, Buildable and Multi-Steps Puzzle
 ///=========================================================================================///
@@ -72,6 +72,8 @@ Puzzle* PuzzleCreator::CreateBuildablePuzzle(int pieceNum, int keyLevel, bool is
     clock_t beginTime = clock();
     clock_t endTime;
     float elapsed;
+    
+    RandomForest randomForest = trainRandomForest();
 
     while ( true )
     {
@@ -89,7 +91,7 @@ Puzzle* PuzzleCreator::CreateBuildablePuzzle(int pieceNum, int keyLevel, bool is
         puzzle = new Puzzle();
         puzzle->SetVolume( volume );
 
-        PartitionVolume_Subdiv(puzzle, pieceNum, keyLevel, variance);
+        PartitionVolume_Subdiv(puzzle, pieceNum, keyLevel, variance, randomForest);
 
         if ( puzzle->pieceList.size() != pieceNum )
             continue;
@@ -211,7 +213,7 @@ Puzzle* PuzzleCreator::CreateBuildablePuzzle(int pieceNum, int keyLevel, bool is
     return puzzle;
 }
 
-void PuzzleCreator::PartitionVolume_Subdiv(Puzzle *puzzle, int pieceNum, int keyLevel, float variance)
+void PuzzleCreator::PartitionVolume_Subdiv(Puzzle *puzzle, int pieceNum, int keyLevel, float variance, RandomForest randomForest)
 {
     int maxSubdivTimes = 0.6*puzzle->volume->GetVolumeVoxelNum(); // Maximum subdivision times
     vector<int> pieceVoxelNums = GetPieceVoxelNum(pieceNum, puzzle->volume->GetVolumeVoxelNum(), 0, variance); // Number of voxels of each piece
@@ -225,7 +227,7 @@ void PuzzleCreator::PartitionVolume_Subdiv(Puzzle *puzzle, int pieceNum, int key
 
     while ( true )
     {
-        bool isSuceess = ConstructPiece(puzzle, pieceNum, keyLevel, maxSubdivTimes, pieceVoxelNums);
+        bool isSuceess = ConstructPiece(puzzle, pieceNum, keyLevel, maxSubdivTimes, pieceVoxelNums, randomForest);
 
         //puzzle->volume->PrintVolume();
 
@@ -257,6 +259,8 @@ vector< vector<int> > PuzzleCreator::CreateBuildablePuzzle_creator(int pieceNum,
     float elapsed;
 
     printf("begin.\n");
+    
+    RandomForest randomForest = trainRandomForest();
 
     while ( true )
     {
@@ -274,7 +278,7 @@ vector< vector<int> > PuzzleCreator::CreateBuildablePuzzle_creator(int pieceNum,
         puzzle = new Puzzle();
         puzzle->SetVolume( volume );
 
-        PartitionVolume_Subdiv(puzzle, pieceNum, keyLevel, variance);
+        PartitionVolume_Subdiv(puzzle, pieceNum, keyLevel, variance, randomForest);
 
         if ( puzzle->pieceList.size() != pieceNum )
             continue;
@@ -394,7 +398,8 @@ vector< vector<int> > PuzzleCreator::CreateBuildablePuzzle_creator(int pieceNum,
     return puzzleCandidates;
 }
 
-bool PuzzleCreator::ConstructPiece(Puzzle *puzzle, int pieceNum, int keyLevel, int maxSubdivTimes, vector<int> pieceVoxelNums)
+bool PuzzleCreator::ConstructPiece(Puzzle *puzzle, int pieceNum, int keyLevel, int maxSubdivTimes, vector<int> pieceVoxelNums, 
+                                  RandomForest randomForest)
 {
     int lastPieceID = puzzle->pieceList.size()-1;
     Piece *lastPiece = puzzle->pieceList[lastPieceID];
@@ -430,9 +435,13 @@ bool PuzzleCreator::ConstructPiece(Puzzle *puzzle, int pieceNum, int keyLevel, i
         remvPiece = new Piece;
         restPiece = new Piece;
 
+//         #ifdef DATASET_ENABLE
+        vector<seedPathCreationSequence> seedPathSequenceArray;
+//         #endif
         if ( lastPieceID == 0 )
         {
-            SubdivideKey(puzzle, lastPiece, remvPiece, restPiece, remvPieceVoxelNum);
+            
+            SubdivideKey(puzzle, lastPiece, remvPiece, restPiece, remvPieceVoxelNum, seedPathSequenceArray, randomForest);
         }
         else
         {
@@ -445,12 +454,27 @@ bool PuzzleCreator::ConstructPiece(Puzzle *puzzle, int pieceNum, int keyLevel, i
 
         // Check if the subdivision is valid
         bool isSubdivisionValid = CheckPieceSubdivision( puzzle, pieceNum, keyLevel );
-
+//         std::cout << lastPieceID << " isSubdivisionValid " << std::boolalpha << isSubdivisionValid << std::endl;
         if ( isSubdivisionValid )
         {
+            if ( lastPieceID == 0 )
+            {
+                #ifdef DATASET_ENABLE
+                    seedPathSequenceArray[0].updateFinalResult();
+                    seedPathSequenceArray[0].saveSeedPathSequence("Spider_12x13x6.json");
+                #endif   
+            }
             delete lastPiece;
 
             return true;
+        }
+        else {
+            if ( lastPieceID == 0 )
+            {
+                #ifdef DATASET_ENABLE
+                    seedPathSequenceArray[0].saveSeedPathSequence("Spider_12x13x6.json");
+                #endif   
+            }
         }
     }
 
@@ -464,7 +488,8 @@ bool PuzzleCreator::ConstructPiece(Puzzle *puzzle, int pieceNum, int keyLevel, i
 ///                         Construct Puzzle Pieces by Subdivision
 ///=========================================================================================///
 
-bool PuzzleCreator::SubdivideKey(Puzzle *puzzle, Piece *origPiece, Piece *remvPiece, Piece *restPiece, int remvAvgVoxelNum)
+bool PuzzleCreator::SubdivideKey(Puzzle *puzzle, Piece *origPiece, Piece *remvPiece, Piece *restPiece, int remvAvgVoxelNum, 
+                                vector<seedPathCreationSequence> &seedPathSequenceArray, RandomForest randomForest)
 {
     /// 1. Construct geometry of the key piece
     PieceCreator pieceCreator;
@@ -475,8 +500,8 @@ bool PuzzleCreator::SubdivideKey(Puzzle *puzzle, Piece *origPiece, Piece *remvPi
 #endif
 
     MainPath mainPath;
-    bool isSucess = pieceCreator.ComputeMainPath(remvAvgVoxelNum, mainPath);
-
+    bool isSucess = pieceCreator.ComputeMainPath(remvAvgVoxelNum, mainPath, seedPathSequenceArray, randomForest);
+//     std::cout << "SubdivideKey" << std::boolalpha << isSucess << std::endl;
     //if ( !mainPath.isValid )
     if( isSucess == false )
         return false;
