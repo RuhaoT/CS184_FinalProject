@@ -6,7 +6,7 @@ set(CMAKE_BUILD_TYPE "RelWithDebInfo")
 
 # disable optimization
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
-STRING(REPLACE "-O2" "-Od" CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
+# STRING(REPLACE "-O2" "-Od" CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
 add_compile_options(-fno-omit-frame-pointer -Og)
 
 
